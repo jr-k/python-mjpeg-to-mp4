@@ -41,7 +41,7 @@ while True:
 		img_array.append(image)
 
 		if ts - last_ts_snapshot >= SNAPSHOT_EVERY_X_SECONDS:
-			cv2.imwrite('img3.jpg', image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+			cv2.imwrite(SNAPSHOT_OUTPUT, image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
 			last_ts_snapshot = ts
 
 		if ts - last_ts_segment >= SEGMENT_EVERY_X_SECONDS:
