@@ -23,7 +23,7 @@ last_ts_segment = 0
 
 # Run
 while True:
-	bytes += stream.read(4096)
+	bytes += stream.read(1024)
 	a = bytes.find(b'\xff\xd8')
 	b = bytes.find(b'\xff\xd9')
 	if a != -1 and b != -1:
