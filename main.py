@@ -4,6 +4,7 @@ import datetime
 import urllib.request
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from multiprocessing import Manager, Process
 
 # Configuration
 STREAM_URL = 'http://your_mjpeg_stream.com'
@@ -20,6 +21,13 @@ fontpath = "./FreeSans.ttf"
 font = ImageFont.truetype(fontpath, 16)
 last_ts_snapshot = 0
 last_ts_segment = 0
+i = 0
+
+def processFrames(vidname, frames):
+	out = cv2.VideoWriter(vidname, cv2.VideoWriter_fourcc(*'H264'), 10, (800,600))
+	for i in range(len(frames)):
+		out.write(frames[i])
+	out.release()
 
 # Run
 while True:
@@ -27,6 +35,8 @@ while True:
 	a = bytes.find(b'\xff\xd8')
 	b = bytes.find(b'\xff\xd9')
 	if a != -1 and b != -1:
+		i += 1
+		# print("frame " + str(i))
 		jpg = bytes[a:b+2]
 		bytes = bytes[b+2:]
 		image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
@@ -41,16 +51,16 @@ while True:
 		img_array.append(image)
 
 		if ts - last_ts_snapshot >= SNAPSHOT_EVERY_X_SECONDS:
+			print("Prepare snapshot")
 			cv2.imwrite(SNAPSHOT_OUTPUT, image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
 			last_ts_snapshot = ts
 
 		if ts - last_ts_segment >= SEGMENT_EVERY_X_SECONDS:
 			tsmark = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
 			vidname = SEGMENT_OUTPUT.replace('{timestamp}', tsmark)
-			out = cv2.VideoWriter(vidname, cv2.VideoWriter_fourcc(*'MP4V'), 10, (800, 600))
-			for i in range(len(img_array)):
-				out.write(img_array[i])
-			out.release()
+			print("Prepare video " + vidname)
+			p = Process(target=processFrames, args=(vidname, img_array))
+                        p.start()
 			img_array = []
 			last_ts_segment = ts
 
